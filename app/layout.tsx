@@ -20,10 +20,7 @@ const description =
 
 export const metadata: Metadata = {
   metadataBase: new URL(site),
-  title: {
-    default: title,
-    template: "%s · Umar Mirza",
-  },
+  title,
   description,
   applicationName: "Umar Mirza",
   keywords: [
