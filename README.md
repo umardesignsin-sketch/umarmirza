@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FNJ Marketplace Waitlist
 
-## Getting Started
+Production waitlist landing page and admin dashboard for FNJ Marketplace.
 
-First, run the development server:
+Users can join the waitlist or reserve creator access. Submissions persist in Supabase. The FNJ team manages them at `/admin`.
+
+## Stack
+
+- Next.js (App Router) + TypeScript
+- Tailwind CSS
+- Supabase Postgres
+- Supabase Auth (admin only)
+- Recharts
+
+## 1. Install
+
+```bash
+cd fnj-marketplace
+npm install
+cp .env.example .env.local
+```
+
+## 2. Environment variables
+
+Create a project at [supabase.com](https://supabase.com). Then in **Project Settings → API** copy the values into `.env.local`:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_FNJ_APP_URL=https://fnj.dev
+
+ADMIN_EMAIL=you@fnj.dev
+ADMIN_PASSWORD=change-me-to-a-strong-password
+```
+
+| Variable | Where it is used |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | Client + server Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Browser auth + session refresh |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only. Waitlist writes, admin reads, CSV export, admin seeding. **Never expose this in the client.** |
+| `NEXT_PUBLIC_SITE_URL` | SEO, Open Graph, share links |
+| `NEXT_PUBLIC_FNJ_APP_URL` | Navbar “Go to FNJ” |
+| `ADMIN_EMAIL` | First admin. Used by `npm run seed:admin` and auto-promoted on login. |
+| `ADMIN_PASSWORD` | Seed script only. Not read by the Next.js app. |
+
+## 3. Database schema
+
+In Supabase: **SQL Editor → New query**. Paste and run the entire file:
+
+[`supabase/schema.sql`](supabase/schema.sql)
+
+That creates:
+
+- `waitlist_users` with constraints, unique email (case-insensitive), unique referral codes
+- `status`: `waitlisted` · `invited` · `converted` · `rejected`
+- `creator_status`: `new` · `reviewing` · `approved` · `rejected` (required when `source = creator`)
+- Row Level Security: anon cannot read or write. Authenticated admins (`app_metadata.role = admin`) can manage rows. Public inserts go through `/api/waitlist` using the service-role key after server-side validation.
+
+## 4. Create the first admin
+
+```bash
+npm run seed:admin
+```
+
+This creates (or promotes) the user in Supabase Auth with `app_metadata.role = "admin"` using `ADMIN_EMAIL` / `ADMIN_PASSWORD`.
+
+Manual alternative:
+
+1. Supabase → Authentication → Users → Add user (`ADMIN_EMAIL`).
+2. Log in at `/admin/login`. If the email matches `ADMIN_EMAIL`, the app promotes the account automatically (requires the service-role key).
+
+Do not hardcode credentials in the frontend.
+
+## 5. Run locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- Landing page: [http://localhost:3000](http://localhost:3000)
+- Admin: [http://localhost:3000/admin](http://localhost:3000/admin)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Unauthenticated visits to `/admin` redirect to `/admin/login`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 6. Deploy to Vercel
 
-## Learn More
+1. Push this repo and import it in Vercel.
+2. Add the same environment variables (use your production `NEXT_PUBLIC_SITE_URL`).
+3. Deploy.
+4. Run `npm run seed:admin` locally against the production Supabase project, or create the admin user in the Supabase dashboard.
 
-To learn more about Next.js, take a look at the following resources:
+## Product routes
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Route | Purpose |
+| --- | --- |
+| `/` | Waitlist landing page |
+| `/privacy` | Privacy copy |
+| `/admin/login` | Admin login |
+| `/admin` | Dashboard + charts |
+| `/admin/waitlist` | Search, filter, status, delete, CSV |
+| `/admin/creators` | Creator review (approve / reject) |
+| `/admin/settings` | Admin account + exports |
+| `POST /api/waitlist` | Public signup |
+| `PATCH/DELETE /api/admin/waitlist/[id]` | Admin mutations |
+| `GET /api/admin/export` | CSV (`source=all\|waitlist\|creator`) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Security model
 
-## Deploy on Vercel
+- Service-role key is server-only.
+- Public users can only submit the waitlist/creator form. Duplicate emails are rejected (`409`).
+- Inputs are validated with Zod on the server. URLs must be `http`/`https`.
+- Admin routes require a Supabase session **and** `app_metadata.role === "admin"`.
+- Rate limiting (best-effort, per instance) on public signup.
+- Honeypot field on both forms.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Referral links
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Each signup gets a `referral_code`. The success state share URL is `/?ref=CODE`. If a later visitor submits with that code, `referred_by` is stored. This is a lightweight referral tracker, not a full reward system.
