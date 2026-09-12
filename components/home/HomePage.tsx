@@ -54,9 +54,28 @@ const timeline: { year: string; text: ReactNode }[] = [
   },
 ];
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Umar Mirza",
+  url: "https://www.umarr.in",
+  jobTitle: "Designer, developer, and creator",
+  description:
+    "Umar Mirza is a builder, designer, and creator. Web design, development, and growth for businesses and individuals.",
+  email: "mailto:marketingwithumar1@gmail.com",
+  sameAs: [
+    "https://x.com/iumarmirza",
+    "https://www.instagram.com/iumarmirza/",
+  ],
+};
+
 export function HomePage() {
   return (
     <main className="min-h-full bg-white">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+      />
       <div className="mx-auto max-w-[560px] px-6 pb-16 pt-24 sm:pt-28">
         <h1 className="text-[15px] font-semibold tracking-[-0.01em] text-[#111]">
           Umar Mirza

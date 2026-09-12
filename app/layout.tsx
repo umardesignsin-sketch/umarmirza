@@ -16,13 +16,15 @@ const geistMono = Geist_Mono({
 const site = getSiteUrl();
 const title = "Umar Mirza";
 const description =
-  "I'm Umar Mirza, a builder, designer, and creator. I help businesses and individuals bring their ideas to life on the internet through web design, development, and growth.";
+  "Umar Mirza is a builder, designer, and creator. Web design, development, and growth for businesses and individuals.";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site),
   title,
   description,
   applicationName: "Umar Mirza",
+  authors: [{ name: "Umar Mirza", url: site }],
+  creator: "Umar Mirza",
   keywords: [
     "Umar Mirza",
     "designer",
@@ -30,6 +32,9 @@ export const metadata: Metadata = {
     "Framer",
     "indie hacker",
   ],
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
     title,
     description,

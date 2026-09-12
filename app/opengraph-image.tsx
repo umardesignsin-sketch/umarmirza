@@ -37,7 +37,7 @@ export default function OpenGraphImage() {
             maxWidth: 900,
           }}
         >
-          Builder, designer, and creator.
+          Designer, developer, and creator.
         </div>
       </div>
     ),

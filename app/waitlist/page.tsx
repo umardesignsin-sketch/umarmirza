@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import { LandingPage } from "@/components/landing/LandingPage";
 
 export const metadata: Metadata = {
-  title: "FNJ Marketplace — Coming Soon",
+  title: "Umar Mirza",
   description:
-    "FNJ Marketplace is launching soon. Join the waitlist to claim free conversion credits and list your Framer templates for free.",
+    "Umar Mirza is a builder, designer, and creator. Web design, development, and growth for businesses and individuals.",
+  alternates: {
+    canonical: "/waitlist",
+  },
 };
 
 export default async function WaitlistPage({
